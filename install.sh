@@ -9,7 +9,7 @@ sudo yum install -y unzip
 sudo yum install -y wget
 sudo yum install -y ntp
 
-source setup.properies
+source /tmp/hadoopOnGeni/setup.properies
 
 cd /tmp/
 
@@ -20,7 +20,7 @@ wget --no-cookies \
 $java_repo_location -O jdk-8-linux-x64.tar.gz
 
 #set up repository
-wget -nv $hdp_repo_location -O /etc/yum.repos.d/hdp.repo
+sudo wget -nv $hdp_repo_location -O /etc/yum.repos.d/hdp.repo
 
 #set up java
 sudo mkdir /usr/java && cd /usr/java
