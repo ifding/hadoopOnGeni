@@ -1,0 +1,11 @@
+#define config files
+etc_hosts_file=/etc/hosts
+java_repo_location=http://download.oracle.com/otn-pub/java/jdk/8u151-b12/e758a0de34e24606bca991d704f6dcbf/jdk-8u151-linux-x64.tar.gz
+hdp_repo_location=http://public-repo-1.hortonworks.com/HDP/centos7/2.x/updates/2.6.2.0/hdp.repo
+
+#versions
+hdp_full_version=2.6.2.0
+hdp_major_version=${hdp_full_version:0:3}
+hdp_utils_full_version=1.1.0.21
+os_full_version=7.3
+os_major_version=${os_full_version:0:1}
