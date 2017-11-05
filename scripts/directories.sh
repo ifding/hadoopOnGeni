@@ -14,13 +14,13 @@
 #
 
 # Space separated list of directories where NameNode will store file system image. For example, /grid/hadoop/hdfs/nn /grid1/hadoop/hdfs/nn
-DFS_NAME_DIR="/grid/0/hadoop/hdfs/nn";
+DFS_NAME_DIR="/grid/hadoop/hdfs/nn";
 
 # Space separated list of directories where DataNodes will store the blocks. For example, /grid/hadoop/hdfs/dn /grid1/hadoop/hdfs/dn /grid2/hadoop/hdfs/dn
-DFS_DATA_DIR="/grid/0/hadoop/hdfs/dn";
+DFS_DATA_DIR="/grid/hadoop/hdfs/dn";
 
 # Space separated list of directories where SecondaryNameNode will store checkpoint image. For example, /grid/hadoop/hdfs/snn /grid1/hadoop/hdfs/snn /grid2/hadoop/hdfs/snn
-FS_CHECKPOINT_DIR="/grid/0/hadoop/hdfs/snn";
+FS_CHECKPOINT_DIR="/grid/hadoop/hdfs/snn";
 
 
 
@@ -38,13 +38,13 @@ HADOOP_CONF_DIR="/etc/hadoop/conf";
 #
 
 # Space separated list of directories where YARN will store temporary data. For example, /grid/hadoop/yarn/local /grid1/hadoop/yarn/local /grid2/hadoop/yarn/local
-YARN_LOCAL_DIR="/grid/0/hadoop/yarn/local";
+YARN_LOCAL_DIR="/grid/hadoop/yarn/local";
 
 # Directory to store the YARN logs.
 YARN_LOG_DIR="/var/log/hadoop/yarn";
 
 # Space separated list of directories where YARN will store container log data. For example, /grid/hadoop/yarn/logs /grid1/hadoop/yarn/logs /grid2/hadoop/yarn/logs
-YARN_LOCAL_LOG_DIR="/grid/0/hadoop/yarn/logs";
+YARN_LOCAL_LOG_DIR="/grid/hadoop/yarn/logs";
 
 # Directory to store the YARN process ID.
 YARN_PID_DIR="/var/run/hadoop/yarn";
@@ -152,4 +152,6 @@ OOZIE_TMP_DIR="/var/tmp/oozie"
 #
 SQOOP_CONF_DIR="/etc/sqoop/conf"
 
+
 export HADOOP_LIBEXEC_DIR=/usr/lib/hadoop/libexec
+

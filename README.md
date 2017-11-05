@@ -21,7 +21,12 @@ This package contains the following set of helper file for use when manually ins
    Set of configuration files for Core Hadoop and Essential Hadoop components, including scripts for setting up monitoring.
 
 
+### Reference
+
 Website - http://www.hortonworks.com
+
 Documentation - http://docs.hortonworks.com/
+
 Downloads - http://hortonworks.com/download/
+
 Forums - http://hortonworks.com/community/forums/
