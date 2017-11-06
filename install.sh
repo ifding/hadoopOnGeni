@@ -1,5 +1,22 @@
 #!/bin/bash
 
+#get the hostname of NameNode
+HDFS_HOSTNAME="$(hostname)"
+shortname="$(echo $(hostname) | cut -d. -f1)"
+replace="namenode"
+HDFS_NAMENODE=${HDFS_HOSTNAME//$shortname/$replace}
+HDFS_SECONDARY="$HDFS_NAMENODE"
+YARN_RESOURCEMANAGER="$HDFS_NAMENODE"
+ZOOKEEPER_QUORUM="$HDFS_NAMENODE"
+
+#get the hostname of DataNode
+if ! [ "${hostname#datanode}" = "${hostname}" ]; then
+  echo "get datanode hostname";
+  HDFS_DATANODE="$HDFS_HOSTNAME"
+  YARN_NODEMANAGER="$HDFS_DATANODE"
+fi
+
+
 #software requirements
 sudo yum -y update
 sudo yum install -y scp
@@ -10,7 +27,6 @@ sudo yum install -y wget
 sudo yum install -y ntp
 
 source /tmp/hadoopOnGeni/setup.properies
-
 cd /tmp/
 
 #download java package
@@ -58,6 +74,7 @@ sudo yum install -y hadoop hadoop-hdfs hadoop-libhdfs hadoop-yarn hadoop-mapredu
 
 #NameNode directories
 if ! [ "${hostname#namenode}" = "${hostname}" ]; then
+  echo "creating namenode directories";
   sudo mkdir -p $DFS_NAME_DIR;
   sudo chown -R $HDFS_USER:$HADOOP_GROUP $DFS_NAME_DIR;
   sudo chmod -R 755 $DFS_NAME_DIR;
@@ -65,12 +82,14 @@ fi
 
 #DataNode directories
 if ! [ "${hostname#datanode}" = "${hostname}" ]; then
+  echo "creating datanode directories";
   sudo mkdir -p $DFS_DATA_DIR;
   sudo chown -R $HDFS_USER:$HADOOP_GROUP $DFS_DATA_DIR;
   sudo chmod -R 750 $DFS_DATA_DIR;
 fi
 
 #All HDFS hosts
+echo "All HDFS hosts"
 sudo mkdir -p $HDFS_LOG_DIR
 sudo chown -R $HDFS_USER:$HADOOP_GROUP $HDFS_LOG_DIR
 sudo chmod -R 755 $HDFS_LOG_DIR
@@ -79,6 +98,7 @@ sudo chown -R $HDFS_USER:$HADOOP_GROUP $HDFS_PID_DIR
 sudo chmod -R 755 $HDFS_PID_DIR
 
 # All YARN hosts
+echo "All YARN hosts"
 sudo mkdir -p $YARN_LOG_DIR
 sudo chown -R $YARN_USER:$HADOOP_GROUP $YARN_LOG_DIR
 sudo chmod -R 755 $YARN_LOG_DIR
@@ -119,7 +139,7 @@ sudo sed -i 's/-Xms[0-9*m|G]*/-Xms512m/g' ./hadoop-env.sh
 # Workaround: NEED TO FIX THE BAD HEALTH CHECK: port 50060 instead of 8042
 sudo sed -i "s/50060/8042/g" ./health_check
 
-echo "$HDFS_DATANODES" | tr ',' '\n' > "$HADOOP_CONF_DIR/slaves"
+sudo echo "$HDFS_DATANODE" | tr ',' '\n' > "$HADOOP_CONF_DIR/slaves"
 
 #All hosts
 echo "Deploying Hadoop core configuration files . . ."
@@ -132,15 +152,16 @@ sudo chmod -R 755 $HADOOP_CONF_DIR/../
 
 #workarounds
 #All hosts
-sudo ln -s $HADOOP_LIB_DIR/libexec $YARN_LIB_DIR/
-sudo ln -s $HADOOP_LIB_DIR/libexec $MAPRED_LIB_DIR/
+#sudo ln -s $HADOOP_LIB_DIR/libexec $YARN_LIB_DIR/
+#sudo ln -s $HADOOP_LIB_DIR/libexec $MAPRED_LIB_DIR/
 #TODO: HOW DO I SPECIFY THE LOG DIRECTION FOR MR ON YARN ???
 # THIS SHOULD NOT BE NECESSARY
-sudo ln -s $MAPRED_LOG_DIR $MAPRED_LIB_DIR/logs
+#sudo ln -s $MAPRED_LOG_DIR $MAPRED_LIB_DIR/logs
 
 #Boot up HDFS
 #NameNode
 if ! [ "${hostname#namenode}" = "${hostname}" ]; then
+  echo "namenode boot up HDFS";
   #formatting HDFS
   su hdfs -c "echo Y| hdfs namenode -format;
   #starting HDFS
@@ -148,14 +169,15 @@ if ! [ "${hostname#namenode}" = "${hostname}" ]; then
 
   #creating base folders in HDFS
   su hdfs -c "/usr/lib/hadoop/bin/hadoop fs -mkdir -p /user/hdfs";
-  #su hdfs -c "/usr/lib/hadoop/bin/hadoop fs -mkdir -p /tmp"
-  #su hdfs -c "/usr/lib/hadoop/bin/hadoop fs -chmod +wt /tmp"
+  #su hdfs -c "/usr/lib/hadoop/bin/hadoop fs -mkdir -p /tmp";
+  #su hdfs -c "/usr/lib/hadoop/bin/hadoop fs -chmod +wt /tmp";
 fi
 
 #DataNode
-if ! [ "${hostname#datanode}" = "${hostname}" ]; then 
+if ! [ "${hostname#datanode}" = "${hostname}" ]; then
+  echo "datanode starting HDFS";
   #starting HDFS
-  su hdfs -c "/usr/lib/hadoop/sbin/hadoop-daemon.sh start datanode
+  su hdfs -c "/usr/lib/hadoop/sbin/hadoop-daemon.sh start datanode;
 fi
 
 #Boot up YARN
@@ -177,7 +199,7 @@ if ! [ "${hostname#namenode}" = "${hostname}" ]; then
   su yarn -c "/usr/lib/hadoop-mapreduce/sbin/mr-jobhistory-daemon.sh start historyserver"
 fi
 
-#YARN_NODEMANAGERS
+#YARN_NODEMANAGER
 if ! [ "${hostname#namenode}" = "${hostname}" ]; then
   su yarn -c "/usr/lib/hadoop-yarn/sbin/yarn-daemon.sh start nodemanager"
 fi
@@ -198,21 +220,25 @@ sudo chmod -R 755 $ZOOKEEPER_DATA_DIR
 #ZooKeeper configuration
 echo "Editing ZooKeeper configuration files . . ."
 cd /tmp/hadoopOnGeni/configuration_files/zookeeper
+
 sudo sed -i '/^dataDir/ c\dataDir='"$ZOOKEEPER_DATA_DIR"'' ./zoo.cfg
-ZOOKEEPER1=`echo ZOOKEEPER_QUORUM | tr ',' '\n' | sed -n '1 p'`
-ZOOKEEPER2=`echo ZOOKEEPER_QUORUM | tr ',' '\n' | sed -n '2 p'`
-ZOOKEEPER3=`echo ZOOKEEPER_QUORUM | tr ',' '\n' | sed -n '3 p'`
+
+#ZOOKEEPER1=`echo ZOOKEEPER_QUORUM | tr ',' '\n' | sed -n '1 p'`
+#ZOOKEEPER2=`echo ZOOKEEPER_QUORUM | tr ',' '\n' | sed -n '2 p'`
+#ZOOKEEPER3=`echo ZOOKEEPER_QUORUM | tr ',' '\n' | sed -n '3 p'`
+
 sudo sed -i "s/TODO-ZOOKEEPER-SERVER-1/$ZOOKEEPER1/g" ./zoo.cfg
-if [ "$ZOOKEEPER2" == "" ]; then
-    sudo sed -i '/TODO-ZOOKEEPER-SERVER-2/d' ./zoo.cfg
-else
-    sudo sed -i "s/TODO-ZOOKEEPER-SERVER-2/$ZOOKEEPER2/g" ./zoo.cfg
-fi
-if [ "$ZOOKEEPER3" == "" ]; then
-    sudo sed -i '/TODO-ZOOKEEPER-SERVER-3/d' ./zoo.cfg
-else
-    sudo sed -i "s/TODO-ZOOKEEPER-SERVER-3/$ZOOKEEPER3/g" ./zoo.cfg
-fi
+
+#if [ "$ZOOKEEPER2" == "" ]; then
+#    sudo sed -i '/TODO-ZOOKEEPER-SERVER-2/d' ./zoo.cfg;
+#else
+#    sudo sed -i "s/TODO-ZOOKEEPER-SERVER-2/$ZOOKEEPER2/g" ./zoo.cfg;
+#fi
+#if [ "$ZOOKEEPER3" == "" ]; then
+#    sudo sed -i '/TODO-ZOOKEEPER-SERVER-3/d' ./zoo.cfg;
+#else
+#    sudo sed -i "s/TODO-ZOOKEEPER-SERVER-3/$ZOOKEEPER3/g" ./zoo.cfg;
+#fi
 
 echo "Deploying ZooKeeper configuration files . . ."
 sudo rm -rf $ZOOKEEPER_CONF_DIR
