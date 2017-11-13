@@ -47,7 +47,6 @@ sudo ln -s /usr/java/jdk1.8 /usr/java/default
 export JAVA_HOME=/usr/java/default
 export PATH=$JAVA_HOME/bin:$PATH
 
-echo $(hostname -f)
 
 #prepare the environment
 sudo su -c "systemctl enable ntpd; systemctl start ntpd"
@@ -213,6 +212,20 @@ if ! [ "$(echo $(hostname) | cut -d. -f1)" = "namenode" ]; then
 fi
 
 
+#startup scripts
+sudo cat >> /etc/profile << EOF
+
+touch $HADOOP_CONF_DIR/dfs.exclude
+JAVA_HOME=/usr/java/default
+export JAVA_HOME
+HADOOP_CONF_DIR=/etc/hadoop/conf/
+export HADOOP_CONF_DIR
+export PATH=$PATH:$JAVA_HOME:$HADOOP_CONF_DIR
+EOF
+
+source /etc/profile
+java -version
+
 
 #install ZooKeeper
 sudo yum -y install zookeeper
@@ -257,15 +270,12 @@ sudo sed -i "s/TODO-ZOOKEEPER-SERVER-1/$ZOOKEEPER_QUORUM/g" ./zoo.cfg
 echo "Deploying ZooKeeper configuration files . . ."
 sudo rm -rf $ZOOKEEPER_CONF_DIR
 sudo mkdir -p $ZOOKEEPER_CONF_DIR
-sudo cp tmp/hadoopOnGeni/configuration_files/zookeeper/* $ZOOKEEPER_CONF_DIR
+sudo cp /tmp/hadoopOnGeni/configuration_files/zookeeper/* $ZOOKEEPER_CONF_DIR
 sudo chmod a+x $ZOOKEEPER_CONF_DIR/
 sudo chown -R $ZOOKEEPER_USER:$HADOOP_GROUP $ZOOKEEPER_CONF_DIR/../
 sudo chmod -R 755 $ZOOKEEPER_CONF_DIR/../
 
-#startup scripts
-export HADOOP_LIBEXEC_DIR=/usr/lib/hadoop/libexec
-export JAVA_HOME=/usr/java/default
-export PATH=$JAVA_HOME/bin:$PATH
+
 
 #sudo zookeeper -c "/usr/lib/zookeeper/bin/zkServer.sh start /etc/zookeeper/conf/zoo.cfg"
 

@@ -73,7 +73,7 @@
   </property>
     <property>
     <name>fs.defaultFS</name>
-    <value>hdfs://TODO-NAMENODE-HOSTNAME:PORT</value>
+    <value>hdfs://TODO-NAMENODE-HOSTNAME:8020</value>
   </property>
     <property>
     <name>mapreduce.jobtracker.webinterface.trusted</name>
