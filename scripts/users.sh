@@ -31,6 +31,8 @@ ZOOKEEPER_USER=zookeeper ;
 # User which will own the Oozie services.
 OOZIE_USER=oozie
 
+# User which will own the YARN services.
+SPARK_USER=spark ;
 
 # A common group shared by services.
 HADOOP_GROUP=hadoop ;

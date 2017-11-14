@@ -80,6 +80,7 @@ sudo useradd -g $HADOOP_GROUP $HDFS_USER
 sudo useradd -g $HADOOP_GROUP $MAPRED_USER
 sudo useradd -g $HADOOP_GROUP $TEMPLETON_USER
 sudo useradd -g $HADOOP_GROUP $ZOOKEEPER_USER
+sudo useradd -g $HADOOP_GROUP $SPARK_USER
 #sleep 3
 
 #install hadoop core packages from yum
@@ -231,8 +232,8 @@ fi
 if ! [ "$(echo $(hostname) | cut -d. -f1)" = "namenode" ]; then
   sudo su $YARN_USER -c "/usr/hdp/current/hadoop-yarn-nodemanager/sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR start nodemanager"
   #change permissions on the container-executor file
-  sudo $YARN_USER -c "chown -R root:hadoop /usr/hdp/current/hadoop-yarn*/bin/container-executor";
-  sudo $YARN_USER -c "chmod -R 6050 /usr/hdp/current/hadoop-yarn*/bin/container-executor";
+  sudo su $YARN_USER -c "chown -R root:hadoop /usr/hdp/current/hadoop-yarn*/bin/container-executor";
+  sudo su $YARN_USER -c "chmod -R 6050 /usr/hdp/current/hadoop-yarn*/bin/container-executor";
 fi
 
 
@@ -250,7 +251,7 @@ java -version
 
 
 # Install ZooKeeper
-sudo yum -y install zookeeper
+sudo yum -y install zookeeper-server
 echo "Creating ZooKeeper directories . . ."
 sudo mkdir -p $ZOOKEEPER_LOG_DIR
 sudo chown -R $ZOOKEEPER_USER:$HADOOP_GROUP $ZOOKEEPER_LOG_DIR
@@ -264,7 +265,7 @@ sudo chmod -R 755 $ZOOKEEPER_DATA_DIR
 
 # Initialize myid file
 # only work for single node zk cluster
-#sudo echo '1' > $ZOOKEEPER_DATA_DIR/myid
+sudo sh -c "echo '1' >> $ZOOKEEPER_DATA_DIR/myid"
 
 #ZooKeeper configuration
 echo "Editing ZooKeeper configuration files . . ."
@@ -297,10 +298,40 @@ sudo chmod a+x $ZOOKEEPER_CONF_DIR/
 sudo chown -R $ZOOKEEPER_USER:$HADOOP_GROUP $ZOOKEEPER_CONF_DIR/../
 sudo chmod -R 755 $ZOOKEEPER_CONF_DIR/../
 
+# Start ZooKeeper
+sudo su $ZOOKEEPER_USER -c "export ZOOCFGDIR=$ZOOKEEPER_CONF_DIR ; export ZOOCFG=zoo.cfg;
+      source $ZOOKEEPER_CONF_DIR/zookeeper-env.sh ; $ZOOKEEPER_HOME/bin/zkServer.sh start"
+
+#sudo su  zookeeper -c "export ZOOCFGDIR=/usr/hdp/current/zookeeper-server/conf ; export ZOOCFG=zoo.cfg
+#; source /usr/hdp/current/zookeeper-server/conf/zookeeper-env.sh ; /usr/hdp/current/zookeeper-server/bin/zkServer.sh start"
 
 
-#sudo zookeeper -c "/usr/lib/zookeeper/bin/zkServer.sh start /etc/zookeeper/conf/zoo.cfg"
+# Create directories for Spark2
+# for submitting Spark2 jobs
+sudo mkdir -p /usr/hdp/current/spark2-client
+# for launching Spark2 master processes, such as the Spark2 History Server
+sudo mkdir -p /usr/hdp/current/spark2-history
+# for the Spark2 Thrift Server
+sudo mkdir -p /usr/hdp/current/spark2-thriftserver
 
-#sudo /usr/lib/hadoop-yarn/sbin/yarn-daemon.sh --config /etc/hadoop/conf start resourcemanager
-#sudo /usr/lib/hadoop-yarn/sbin/yarn-daemon.sh --config /etc/hadoop/conf start nodemanager
-#sudo /usr/lib/hadoop-mapreduce/sbin/mr-jobhistory-daemon.sh --config /etc/hadoop/conf start historyserver
+# Install Spark2
+source /tmp/hadoopOnGeni/setup.properies
+sudo yum install -y spark2_${hdp_install_version}-master spark_${hdp_install_version}-python
+sudo chown spark2:hadoop /var/log/spark2
+
+# Configuration files
+sudo mkdir -p /usr/hdp/current/spark2-client/conf
+sudo cp /tmp/hadoopOnGeni/configuration_files/spark2/* /usr/hdp/current/spark2-client/conf
+sudo chmod a+x /usr/hdp/current/spark2-client/conf
+sudo chown -R $SPARK_USER:$HADOOP_GROUP /usr/hdp/current/spark2-client/conf/../
+sudo chmod -R 755 /usr/hdp/current/spark2-client/conf/../
+
+# Create a spark User directory under /user/spark:
+sudo su $HDFS_USER -c "hdfs dfs -mkdir -p /user/spark";
+sudo su $HDFS_USER -c "hdfs dfs -chown spark:spark /user/spark";
+sudo su $HDFS_USER -c "hdfs dfs -chmod -R 755 /user/spark";
+
+# Create an HDFS Directory
+sudo su $HDFS_USER -c "hdfs dfs -mkdir /spark2-history";
+sudo su $HDFS_USER -c "hdfs dfs -chown -R spark:hadoop /spark2-history";
+sudo su $HDFS_USER -c "hdfs dfs -chmod -R 777 /spark2-history";
