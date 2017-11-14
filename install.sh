@@ -1,6 +1,10 @@
 #!/bin/bash
 
-#get the hostname of NameNode
+# Scripted Hortonworks Data Platform 2.6.2 based on manual installation
+# Author: Fei Ding and Yupeng Wu, based on https://github.com/hortonworks/HDP-Public-Utilities
+# This is for CentOs 7
+
+# Get the hostname of NameNode
 HDFS_HOSTNAME="$(hostname)"
 shortname="$(echo $(hostname) | cut -d. -f1)"
 replace="namenode"
@@ -9,7 +13,7 @@ HDFS_SECONDARY="$HDFS_NAMENODE"
 YARN_RESOURCEMANAGER="$HDFS_NAMENODE"
 ZOOKEEPER_QUORUM="$HDFS_NAMENODE"
 
-#get the hostname of DataNode
+# Get the hostname of DataNode
 if ! [ "$(echo $(hostname) | cut -d. -f1)" = "namenode" ]; then
   echo "get datanode hostname";
   HDFS_DATANODE="$HDFS_HOSTNAME"
@@ -17,7 +21,7 @@ if ! [ "$(echo $(hostname) | cut -d. -f1)" = "namenode" ]; then
 fi
 
 
-#software requirements
+# Software requirements
 sudo yum -y update
 sudo yum install -y scp
 sudo yum install -y curl
@@ -26,16 +30,22 @@ sudo yum install -y unzip
 sudo yum install -y wget
 sudo yum install -y ntp
 
+# These must match the location used by the RPMs
+HADOOP_LIB_DIR="/usr/lib/hadoop"
+YARN_LIB_DIR="/usr/lib/hadoop-yarn"
+MAPRED_LIB_DIR="/usr/lib/hadoop-mapreduce"
+
+# Add from properies script
 source /tmp/hadoopOnGeni/setup.properies
 cd /tmp/
 
-#download java package
+# Download java package
 wget --no-cookies \
 --no-check-certificate \
 --header "Cookie: oraclelicense=accept-securebackup-cookie" \
 $java_repo_location -O jdk-8-linux-x64.tar.gz
 
-#set up repository
+# Download RPM repo configuration
 sudo wget -nv $hdp_repo_location -O /etc/yum.repos.d/hdp.repo
 
 #set up java
@@ -44,8 +54,9 @@ sudo tar -zxvf /tmp/jdk-8-linux-x64.tar.gz -C /usr/java
 sudo rm /tmp/jdk-8-linux-x64.tar.gz
 sudo mv /usr/java/jdk1.8.* /usr/java/jdk1.8
 sudo ln -s /usr/java/jdk1.8 /usr/java/default
-export JAVA_HOME=/usr/java/default
-export PATH=$JAVA_HOME/bin:$PATH
+# Put JAVA_HOME in the environment on node startup
+sudo echo "export JAVA_HOME=/usr/java/default" > /etc/profile.d/java.sh
+sudo echo "export PATH=$JAVA_HOME/bin:$PATH" > /etc/profile.d/java.sh
 
 
 #prepare the environment
@@ -54,6 +65,7 @@ sudo su -c "setenforce 0"
 sudo su -c "systemctl stop firewalld; systemctl mask firewalld"
 
 cd /tmp/hadoopOnGeni/
+# Source helper files
 source scripts/directories.sh
 source scripts/users.sh
 
@@ -126,7 +138,7 @@ sudo chmod -R 755 $MAPRED_PID_DIR;
 echo "Editing Hadoop core configuration files . . ."
 cd /tmp/hadoopOnGeni/configuration_files/core_hadoop
 sudo sed -i "s/TODO-NAMENODE-HOSTNAME/$HDFS_NAMENODE/g" ./core-site.xml
-#sudo sed -i 's;TODO-FS-CHECKPOINT-DIR;'"$FS_CHECKPOINT_DIR"';g' ./core-site.xml
+sudo sed -i 's;TODO-FS-CHECKPOINT-DIR;'"$FS_CHECKPOINT_DIR"';g' ./core-site.xml
 sudo sed -i 's;TODO-DFS-NAME-DIR;'"$DFS_NAME_DIR"';g' ./hdfs-site.xml
 sudo sed -i 's;TODO-DFS-DATA-DIR;'"$DFS_DATA_DIR"';g' ./hdfs-site.xml
 sudo sed -i "s/TODO-NAMENODE-HOSTNAME/$HDFS_NAMENODE/g" ./hdfs-site.xml
@@ -146,7 +158,10 @@ sudo sed -i "s/TODO-JOBHISTORYNODE-HOSTNAME/$YARN_RESOURCEMANAGER/g" ./mapred-si
 #sudo sed -i 's/-Xms[0-9*m|G]*/-Xms512m/g' ./hadoop-env.sh
 
 
-sudo touch $HADOOP_CONF_DIR/dfs.exclude
+# Workaround: NEED TO FIX THE BAD HEALTH CHECK: port 50060 instead of 8042
+sudo sed -i "s/50060/8042/g" ./health_check
+
+#sudo echo "$HDFS_DATANODE" | tr ',' '\n' > "$HADOOP_CONF_DIR/slaves"
 
 
 #All hosts
@@ -157,6 +172,12 @@ sudo cp /tmp/hadoopOnGeni/configuration_files/core_hadoop/* $HADOOP_CONF_DIR
 sudo chmod a+x $HADOOP_CONF_DIR
 sudo chown -R $HDFS_USER:$HADOOP_GROUP $HADOOP_CONF_DIR/../
 sudo chmod -R 755 $HADOOP_CONF_DIR/../
+
+#workarounds
+sudo ln -s $HADOOP_LIB_DIR/libexec $YARN_LIB_DIR/
+sudo ln -s $HADOOP_LIB_DIR/libexec $MAPRED_LIB_DIR/
+#This should not be necessary
+sudo ln -s $MAPRED_LOG_DIR $MAPRED_LIB_DIR/logs
 
 #Boot up HDFS
 #NameNode
@@ -189,7 +210,7 @@ sudo su $HDFS_USER -c "hdfs dfs -chmod 444 /hdp/apps/$hdp_version/mapreduce/mapr
 
 #YARN_RESOURCEMANAGER
 if [ "$(echo $(hostname) | cut -d. -f1)" = "namenode" ]; then
-  sudo su -l yarn -c "/usr/hdp/current/hadoop-yarn-resourcemanager/sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR start resourcemanager"
+  sudo su $YARN_USER -c "/usr/hdp/current/hadoop-yarn-resourcemanager/sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR start resourcemanager"
   #JobHistory server to set up directories on HDFS
   sudo su $HDFS_USER -c "hdfs dfs -mkdir -p /mr-history/tmp";
   sudo su $HDFS_USER -c "hdfs dfs -chmod -R 1777 /mr-history/tmp";
@@ -200,15 +221,15 @@ if [ "$(echo $(hostname) | cut -d. -f1)" = "namenode" ]; then
   sudo su $HDFS_USER -c "hdfs dfs -chmod -R 1777 /app-logs";
   sudo su $HDFS_USER -c "hdfs dfs -chown $YARN_USER:$HDFS_USER /app-logs";
   #JobHistory server
-  sudo su -l $YARN_USER -c "/usr/hdp/current/hadoop-mapreduce-historyserver/sbin/mr-jobhistory-daemon.sh --config $HADOOP_CONF_DIR start historyserver";
+  sudo su $YARN_USER -c "/usr/hdp/current/hadoop-mapreduce-historyserver/sbin/mr-jobhistory-daemon.sh --config $HADOOP_CONF_DIR start historyserver";
 fi
 
 #YARN_NODEMANAGER
 if ! [ "$(echo $(hostname) | cut -d. -f1)" = "namenode" ]; then
-  sudo su -l yarn -c "/usr/hdp/current/hadoop-yarn-nodemanager/sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR start nodemanager"
+  sudo su $YARN_USER -c "/usr/hdp/current/hadoop-yarn-nodemanager/sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR start nodemanager"
   #change permissions on the container-executor file
-  sudo yarn -c "chown -R root:hadoop /usr/hdp/current/hadoop-yarn*/bin/container-executor";
-  sudo yarn -c "chmod -R 6050 /usr/hdp/current/hadoop-yarn*/bin/container-executor";
+  sudo $YARN_USER -c "chown -R root:hadoop /usr/hdp/current/hadoop-yarn*/bin/container-executor";
+  sudo $YARN_USER -c "chmod -R 6050 /usr/hdp/current/hadoop-yarn*/bin/container-executor";
 fi
 
 
@@ -227,7 +248,7 @@ source /etc/profile
 java -version
 
 
-#install ZooKeeper
+# Install ZooKeeper
 sudo yum -y install zookeeper
 echo "Creating ZooKeeper directories . . ."
 sudo mkdir -p $ZOOKEEPER_LOG_DIR
@@ -240,9 +261,9 @@ sudo mkdir -p $ZOOKEEPER_DATA_DIR
 sudo chown -R $ZOOKEEPER_USER:$HADOOP_GROUP $ZOOKEEPER_DATA_DIR
 sudo chmod -R 755 $ZOOKEEPER_DATA_DIR
 
-# initialize myid file
+# Initialize myid file
 # only work for single node zk cluster
-sudo echo '1' > $ZOOKEEPER_DATA_DIR/myid
+#sudo echo '1' > $ZOOKEEPER_DATA_DIR/myid
 
 #ZooKeeper configuration
 echo "Editing ZooKeeper configuration files . . ."
