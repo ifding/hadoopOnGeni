@@ -31,9 +31,9 @@ sudo yum install -y wget
 sudo yum install -y ntp
 
 # These must match the location used by the RPMs
-HADOOP_LIB_DIR="/usr/lib/hadoop"
-YARN_LIB_DIR="/usr/lib/hadoop-yarn"
-MAPRED_LIB_DIR="/usr/lib/hadoop-mapreduce"
+#HADOOP_LIB_DIR="/usr/lib/hadoop"
+#YARN_LIB_DIR="/usr/lib/hadoop-yarn"
+#MAPRED_LIB_DIR="/usr/lib/hadoop-mapreduce"
 
 # Add from properies script
 source /tmp/hadoopOnGeni/setup.properies
@@ -54,9 +54,12 @@ sudo tar -zxvf /tmp/jdk-8-linux-x64.tar.gz -C /usr/java
 sudo rm /tmp/jdk-8-linux-x64.tar.gz
 sudo mv /usr/java/jdk1.8.* /usr/java/jdk1.8
 sudo ln -s /usr/java/jdk1.8 /usr/java/default
+export JAVA_HOME=/usr/java/default
+export PATH=$JAVA_HOME/bin:$PATH
+
 # Put JAVA_HOME in the environment on node startup
-sudo echo "export JAVA_HOME=/usr/java/default" > /etc/profile.d/java.sh
-sudo echo "export PATH=$JAVA_HOME/bin:$PATH" > /etc/profile.d/java.sh
+#sudo echo "export JAVA_HOME=/usr/java/default" > /etc/profile.d/java.sh
+#sudo echo "export PATH=$JAVA_HOME/bin:$PATH" > /etc/profile.d/java.sh
 
 
 #prepare the environment
@@ -174,10 +177,10 @@ sudo chown -R $HDFS_USER:$HADOOP_GROUP $HADOOP_CONF_DIR/../
 sudo chmod -R 755 $HADOOP_CONF_DIR/../
 
 #workarounds
-sudo ln -s $HADOOP_LIB_DIR/libexec $YARN_LIB_DIR/
-sudo ln -s $HADOOP_LIB_DIR/libexec $MAPRED_LIB_DIR/
+#sudo ln -s $HADOOP_LIB_DIR/libexec $YARN_LIB_DIR
+#sudo ln -s $HADOOP_LIB_DIR/libexec $MAPRED_LIB_DIR
 #This should not be necessary
-sudo ln -s $MAPRED_LOG_DIR $MAPRED_LIB_DIR/logs
+#sudo ln -s $MAPRED_LOG_DIR $MAPRED_LIB_DIR/logs
 
 #Boot up HDFS
 #NameNode
@@ -234,14 +237,12 @@ fi
 
 
 #startup scripts
-sudo cat >> /etc/profile << EOF
+sudo tee -a /etc/profile << 'EOF'
 
-touch $HADOOP_CONF_DIR/dfs.exclude
-JAVA_HOME=/usr/java/default
-export JAVA_HOME
-HADOOP_CONF_DIR=/etc/hadoop/conf/
-export HADOOP_CONF_DIR
-export PATH=$PATH:$JAVA_HOME:$HADOOP_CONF_DIR
+export HADOOP_CONF_DIR=/etc/hadoop/conf/
+export PATH=$HADOOP_CONF_DIR:$PATH
+export JAVA_HOME=/usr/java/default
+export PATH=$JAVA_HOME/bin:$PATH
 EOF
 
 source /etc/profile
