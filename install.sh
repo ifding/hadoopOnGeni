@@ -320,6 +320,10 @@ sudo yum install -y spark2_${hdp_install_version}-master spark_${hdp_install_ver
 sudo chown spark2:hadoop /var/log/spark2
 
 # Configuration files
+cd /tmp/hadoopOnGeni/configuration_files/spark2/
+sudo sed -i "s/TODO-HIVE-HOSTNAME/$YARN_RESOURCEMANAGER/g" ./hive-site.xml
+sudo sed -i "s/TODO-HISTORY-HOSTNAME/$YARN_RESOURCEMANAGER/g" ./spark-defaults.conf
+
 sudo mkdir -p /usr/hdp/current/spark2-client/conf
 sudo cp /tmp/hadoopOnGeni/configuration_files/spark2/* /usr/hdp/current/spark2-client/conf
 sudo chmod a+x /usr/hdp/current/spark2-client/conf
