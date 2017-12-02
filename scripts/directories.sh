@@ -14,10 +14,10 @@
 #
 
 # Space separated list of directories where NameNode will store file system image. For example, /grid/hadoop/hdfs/nn /grid1/hadoop/hdfs/nn
-DFS_NAME_DIR="/grid/hadoop/hdfs/nn";
+DFS_NAME_DIR="/data/hadoop/hdfs/nn";
 
 # Space separated list of directories where DataNodes will store the blocks. For example, /grid/hadoop/hdfs/dn /grid1/hadoop/hdfs/dn /grid2/hadoop/hdfs/dn
-DFS_DATA_DIR="/grid/hadoop/hdfs/dn";
+DFS_DATA_DIR="/data/hadoop/hdfs/dn";
 
 # Space separated list of directories where SecondaryNameNode will store checkpoint image. For example, /grid/hadoop/hdfs/snn /grid1/hadoop/hdfs/snn /grid2/hadoop/hdfs/snn
 FS_CHECKPOINT_DIR="/grid/hadoop/hdfs/snn";
