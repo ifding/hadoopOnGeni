@@ -340,19 +340,13 @@ sudo su $HDFS_USER -c "hdfs dfs -mkdir /spark2-history";
 sudo su $HDFS_USER -c "hdfs dfs -chown -R spark:hadoop /spark2-history";
 sudo su $HDFS_USER -c "hdfs dfs -chmod -R 777 /spark2-history";
 
-# start HDFS if you need to
-sudo sh $HADOOP_HOME/sbin/start-dfs.sh
 
-# start Spark
-sudo sh $SPARK_HOME/sbin/start-all.sh
-
-# Copy your data to the master node of your Hadoop/Spark cluster.
-
-# All Worker Node
-if ! [ "$(echo $(hostname) | cut -d. -f1)" = "namenode" ]; then
-  # basemods on spark
-  sudo sh /tmp/hadoopOnGeni/install_packages.sh
-  # submit your job
-  cd /opt/basemods_spark
-  #$SPARK_HOME/bin/spark-submit basemods_spark_runner.py
+# Master Node
+if [ "$(echo $(hostname) | cut -d. -f1)" = "namenode" ]; then
+  # start HDFS if you need to
+  sudo sh $HADOOP_HOME/sbin/start-dfs.sh
+  # start Spark
+  sudo sh /usr/hdp/current/spark2-client/sbin/start-all.sh
 fi
+
+sudo sh /tmp/hadoopOnGeni/install_packages.sh
