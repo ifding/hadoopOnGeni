@@ -37,8 +37,10 @@ rspec.addResource( lan )
 #name node
 #resource manager
 node = RSpec.RawPC( "namenode" )
-node.disk_image = IMAGE
 #node.hardware_type = "c8220x"
+node.disk_image = IMAGE
+bs = node.Blockstore("nn_bs", "/data")
+bs.size = "100GB"
 node.addService(RSpec.Install( DOWNLOAD, "/tmp" ))
 node.addService(RSpec.Execute(shell="/bin/sh", command="sudo sh /tmp/download.sh"))
 node.addService(RSpec.Execute(shell="/bin/sh",
@@ -52,8 +54,10 @@ rspec.addResource( node )
 #slave node                              
 for i in range( params.n ):
     node = RSpec.RawPC( "datanode" + str( i ))
-    node.hardware_type = "c8220"
+    #node.hardware_type = "c8220"
     node.disk_image = IMAGE
+    bs = node.Blockstore("bs_"+ str(i), "/data")
+    bs.size = "30GB"
     node.addService(RSpec.Install( DOWNLOAD, "/tmp" ))
     node.addService(RSpec.Execute(shell="/bin/sh", command="sudo sh /tmp/download.sh"))
     node.addService(RSpec.Execute(shell="/bin/sh",

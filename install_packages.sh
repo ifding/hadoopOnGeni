@@ -16,9 +16,10 @@ fi
 # Master Node
 if [ "$(echo $(hostname) | cut -d. -f1)" = "namenode" ]; then
   wget http://node.smrt.pdc-edu-lab-pg0.clemson.cloudlab.us/basemods_spark_v3.zip -P /tmp/
-  sudo unzip /tmp/basemods_spark_v3.zip -d /opt
-  sudo mv /opt/basemods_spark_v3 /opt/basemods_spark
-  cd /opt/basemods_spark
+  sudo mkdir /opt/workspace_py
+  sudo unzip /tmp/basemods_spark_v3.zip -d /opt/workspace_py
+  sudo mv /opt/workspace_py/basemods_spark_v3 /opt/workspace_py/basemods_spark
+  cd /opt/workspace_py/basemods_spark
   sudo chmod +x scripts/exec_sawriter.sh
   sudo chmod +x scripts/baxh5_operations.sh
   sudo chmod +x scripts/cmph5_operations.sh
@@ -26,6 +27,8 @@ if [ "$(echo $(hostname) | cut -d. -f1)" = "namenode" ]; then
   sudo sed -i "s/\/home\/hadoop/\/opt/g" parameters.conf
  
   # Copy your data to the master node of your Hadoop/Spark cluster.
+  # sudo wget http://node.smrt.pdc-edu-lab-pg0.clemson.cloudlab.us/p6c4_ecoli_RSII_DDR2_with_15kb_cut_E01_1.tar.gz -P /data/
+  # tar xvzf file.tar.gz
   # submit your job
   #$SPARK_HOME/bin/spark-submit basemods_spark_runner.py 
 fi
