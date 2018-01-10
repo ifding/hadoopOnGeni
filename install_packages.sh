@@ -8,16 +8,16 @@ sudo pip install numpy h5py paramiko pbcore py4j pyspark
 # All Worker Node
 if ! [ "$(echo $(hostname) | cut -d. -f1)" = "namenode" ]; then
   # Download SMRT-analysis
-  wget http://node.smrt.pdc-edu-lab-pg0.clemson.cloudlab.us/smrtanalysis.tar.gz -P /tmp/
+  wget https://people.cs.clemson.edu/~luofeng/methylation/smrtanalysis.tar.gz -P /tmp/
   sudo tar -xhzvf /tmp/smrtanalysis.tar.gz -C /opt
 fi
 
 
 # Master Node
 if [ "$(echo $(hostname) | cut -d. -f1)" = "namenode" ]; then
-  wget http://node.smrt.pdc-edu-lab-pg0.clemson.cloudlab.us/basemods_spark_v3.zip -P /tmp/
+  wget https://people.cs.clemson.edu/~luofeng/methylation/basemods_spark_v3.tar.gz -P /tmp/
   sudo mkdir /opt/workspace_py
-  sudo unzip /tmp/basemods_spark_v3.zip -d /opt/workspace_py
+  sudo tar -xzf /tmp/basemods_spark_v3.tar.gz -C /opt/workspace_py
   sudo mv /opt/workspace_py/basemods_spark_v3 /opt/workspace_py/basemods_spark
   cd /opt/workspace_py/basemods_spark
   sudo chmod +x scripts/exec_sawriter.sh
