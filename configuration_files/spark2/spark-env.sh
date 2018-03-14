@@ -36,7 +36,8 @@ SPARK_IDENT_STRING=$USER
 SPARK_NICENESS=0
 
 export HADOOP_HOME=${HADOOP_HOME:-/usr/hdp/current/hadoop-client}
-export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-/usr/hdp/current/hadoop-client/conf}
+#export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-/usr/hdp/current/hadoop-client/conf}
+export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-/etc/hadoop/conf}
 
 # The java implementation to use.
 export JAVA_HOME=/usr/java/default
