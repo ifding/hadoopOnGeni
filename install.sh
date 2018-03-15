@@ -212,6 +212,19 @@ sudo su $HDFS_USER -c "hdfs dfs -chmod -R 555 /hdp/apps/$hdp_version/mapreduce"
 sudo su $HDFS_USER -c "hdfs dfs -chmod 444 /hdp/apps/$hdp_version/mapreduce/mapreduce.tar.gz"
 
 
+# Configuration files
+cd $HADOOP_CONF_DIR
+sudo sed -i "s/TODO-HDP-VERSION/$hdp_version/g" ./mapred-site.xml
+sudo sed -i "s/TODO-HDP-VERSION/$hdp_version/g" ./yarn-site.xml
+
+# Set the file /etc/hadoop/conf/container-executor.cfg file permissions to only be readable by root:
+sudo chown root:hadoop /etc/hadoop/conf/container-executor.cfg
+sudo chmod 400 /etc/hadoop/conf/container-executor.cfg
+
+# Set the container-executor program so that only root or hadoop group users can execute it
+sudo chown root:hadoop /usr/hdp/$hdp_version/hadoop-yarn/bin/container-executor
+sudo chmod 6050 /usr/hdp/$hdp_version/hadoop-yarn/bin/container-executor
+
 #YARN_RESOURCEMANAGER
 if [ "$(echo $(hostname) | cut -d. -f1)" = "namenode" ]; then
   sudo su $YARN_USER -c "/usr/hdp/current/hadoop-yarn-resourcemanager/sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR start resourcemanager"
@@ -232,8 +245,8 @@ fi
 if ! [ "$(echo $(hostname) | cut -d. -f1)" = "namenode" ]; then
   sudo su $YARN_USER -c "/usr/hdp/current/hadoop-yarn-nodemanager/sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR start nodemanager"
   #change permissions on the container-executor file
-  sudo su $YARN_USER -c "chown -R root:hadoop /usr/hdp/current/hadoop-yarn*/bin/container-executor";
-  sudo su $YARN_USER -c "chmod -R 6050 /usr/hdp/current/hadoop-yarn*/bin/container-executor";
+  #sudo su $YARN_USER -c "chown -R root:hadoop /usr/hdp/current/hadoop-yarn*/bin/container-executor";
+  #sudo su $YARN_USER -c "chmod -R 6050 /usr/hdp/current/hadoop-yarn*/bin/container-executor";
 fi
 
 

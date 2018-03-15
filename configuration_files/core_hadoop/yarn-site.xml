@@ -70,12 +70,12 @@
   </property>   
     <property>
      <name>yarn.application.classpath</name> 
-     <value>$HADOOP_CONF_DIR,/usr/hdp/${hdp_version}/hadoop-client/*,
-     /usr/hdp/${hdp_version}/hadoop-client/lib/*,
-     /usr/hdp/${hdp_version}/hadoop-hdfs-client/*,
-     /usr/hdp/${hdp_version}/hadoop-hdfs-client/lib/*,
-     /usr/hdp/${hdp_version}/hadoop-yarn-client/*,
-     /usr/hdp/${hdp_version}/hadoop-yarn-client/lib/*</value>
+     <value>$HADOOP_CONF_DIR,/usr/hdp/TODO-HDP-VERSION/hadoop-client/*,
+     /usr/hdp/TODO-HDP-VERSION/hadoop-client/lib/*,
+     /usr/hdp/TODO-HDP-VERSION/hadoop-hdfs-client/*,
+     /usr/hdp/TODO-HDP-VERSION/hadoop-hdfs-client/lib/*,
+     /usr/hdp/TODO-HDP-VERSION/hadoop-yarn-client/*,
+     /usr/hdp/TODO-HDP-VERSION/hadoop-yarn-client/lib/*</value>
   </property> 
     <property>
     <name>yarn.scheduler.minimum-allocation-mb</name>
